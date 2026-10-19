@@ -1,20 +1,27 @@
-'use client'
+"use client";
 
-import { useState } from "react"
+import { useCart } from "../context/cart-context";
 
-export default function CartButton(props: { productName: string }) {
-  const [cartCount, setCartCount] = useState(0)
+export default function CartButton(props: {
+  name: string;
+  price: number;
+  slug: string;
+}) {
+  const { addToCart } = useCart();
 
   return (
     <div>
-     <button
-  onClick={() => {  setCartCount(cartCount + 1)
-    console.log(props.productName)
-  }}
->
-  Сагсанд хийх👾
-</button>
-      <p>Сагс: {cartCount}</p>
+      <button
+        onClick={() => {
+          addToCart({
+            name: props.name,
+            price: props.price,
+            slug: props.slug,
+          });
+        }}
+      >
+        Сагсанд хийх👾
+      </button>
     </div>
-  )
+  );
 }

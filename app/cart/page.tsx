@@ -1,15 +1,33 @@
-import Link from "next/link";
+"use client";
+
+import { useCart } from "../context/cart-context";
 
 export default function CartPage() {
+  const { cartItems, removeFromCart } = useCart();
+
   return (
     <main>
       <h1>Миний сагс</h1>
 
-      <p>Таны сонгосон бараанууд энд харагдана.</p>
+      {cartItems.length === 0 ? (
+        <p>Сагс хоосон байна.</p>
+      ) : (
+        <ul>
+          {cartItems.map((item) => (
+            <li key={item.slug}>
+              <h2>{item.name}</h2>
 
-      <Link href="/products">
-        Бараа үзэх
-      </Link>
+              <p>
+                {item.price.toLocaleString()} ₮
+              </p>
+
+              <button onClick={() => removeFromCart(item.slug)}>
+                Устгах
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

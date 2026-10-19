@@ -1,7 +1,12 @@
 export default function BlogListSkeleton() {
   return (
-    <div>
-      <p>Loading blog posts...</p>
-    </div>
+    <ul className="blog-list">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <li key={index} className="blog-skeleton">
+          <div className="skeleton-title" />
+          <div className="skeleton-text" />
+        </li>
+      ))}
+    </ul>
   );
 }
