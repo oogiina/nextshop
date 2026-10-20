@@ -33,7 +33,8 @@ export default function RootLayout({
 
               <nav className="site-nav" aria-label="Үндсэн цэс">
                 <Link href="/">Нүүр</Link>
-                <Link href="/products">Бараа</Link>
+                <Link href="/categories">Ангилал</Link>
+                <Link href="/products">Бүтээгдэхүүн</Link>
                 <Link href="/blog">Блог</Link>
                 <Link href="/about">Бидний тухай</Link>
               </nav>
@@ -47,6 +48,9 @@ export default function RootLayout({
                   </span>
                 </Link>
 
+                <Link href="/login" className="login-link">
+                  Нэвтрэх
+                </Link>
                 <Link href="/register" className="register-link">
                   Бүртгүүлэх
                 </Link>
@@ -54,7 +58,7 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="site-main">{children}</main>
+          <div className="site-main">{children}</div>
 
           <footer className="site-footer">
             <div className="footer-inner">

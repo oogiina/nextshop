@@ -1,5 +1,6 @@
 "use client";
 
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "../context/cart-context";
 
 export default function CartButton(props: {
@@ -12,6 +13,8 @@ export default function CartButton(props: {
   return (
     <div>
       <button
+        className="add-to-cart"
+        type="button"
         onClick={() => {
           addToCart({
             name: props.name,
@@ -20,7 +23,8 @@ export default function CartButton(props: {
           });
         }}
       >
-        Сагсанд хийх👾
+        <ShoppingCart size={17} aria-hidden="true" />
+        <span>Сагсанд хийх</span>
       </button>
     </div>
   );

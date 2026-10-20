@@ -1,131 +1,116 @@
-
 import Link from "next/link";
+import { Package } from "lucide-react";
 import CartButton from "../ui/cart-button";
+import {
+  getApiEndpoint,
+  getCatalogData,
+  getProductHref,
+  matchesCategory,
+} from "../lib/catalog";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  description?: string | null;
-};
-
-async function getProducts(): Promise<Product[]> {
-  const response = await fetch("http://localhost:8080/api/products", {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error("Бүтээгдэхүүний мэдээллийг татаж чадсангүй.");
-  }
-
-  return response.json();
+function formatPrice(price?: number) {
+  if (price === undefined) return "Үнийг лавлана уу";
+  return `${new Intl.NumberFormat("mn-MN", { maximumFractionDigits: 0 }).format(price)}₮`;
 }
 
-export default async function ProductsPage() {
-  let products: Product[];
-
-  try {
-    products = await getProducts();
-  } catch {
-    return (
-      <section className="catalog-page">
-        <div className="catalog-heading">
-          <span className="store-section-label">ONLINE SHOP</span>
-          <h1>Бүтээгдэхүүн</h1>
-        </div>
-
-        <div className="catalog-message">
-          <h2>Мэдээлэл ачаалж чадсангүй</h2>
-          <p>
-            Backend сервер ажиллаж байгаа эсэхийг шалгана уу.
-          </p>
-          <p className="catalog-hint">
-            API: http://localhost:8080/api/products
-          </p>
-        </div>
-      </section>
-    );
-  }
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; search?: string }>;
+}) {
+  const [{ products, categories }, params] = await Promise.all([
+    getCatalogData(),
+    searchParams,
+  ]);
+  const selectedCategory = categories.find((category) => category.id === params.category);
+  const search = params.search?.trim().toLocaleLowerCase("mn-MN");
+  const visibleProducts = products.filter((product) => {
+    const matchesSelectedCategory =
+      !selectedCategory || matchesCategory(product, selectedCategory);
+    const matchesSearch =
+      !search ||
+      `${product.name} ${product.description ?? ""} ${product.categoryName ?? ""}`
+        .toLocaleLowerCase("mn-MN")
+        .includes(search);
+    return matchesSelectedCategory && matchesSearch;
+  });
 
   return (
     <section className="catalog-page">
       <div className="catalog-heading">
-        <span className="store-section-label">ӨӨРИЙН СОНГОЛТОО ОЛ</span>
-        <h1>
-          Бүх <span>бүтээгдэхүүн.</span>
-        </h1>
-        <p>
-          Бүтээгдэхүүнүүдтэй танилцаж, өөрт хэрэгтэй зүйлээ сонгоорой.
-        </p>
+        <div>
+          <span className="eyebrow">БҮТЭЭГДЭХҮҮНИЙ ЖАГСААЛТ</span>
+          <h1>{selectedCategory ? selectedCategory.name : "Бүх бүтээгдэхүүн"}</h1>
+          {selectedCategory && <p>Сонгосон ангилал: #{selectedCategory.id}</p>}
+          {search && <p>Хайлтын үр дүн: “{params.search}”</p>}
+        </div>
+        <Link href="/categories" className="back-link">
+          <span aria-hidden="true">←</span> Ангилал руу буцах
+        </Link>
       </div>
 
       <div className="catalog-toolbar">
         <div>
-          <h2>Бүтээгдэхүүний жагсаалт</h2>
-          <p>{products.length} бүтээгдэхүүн</p>
+          <h2>Бүтээгдэхүүн</h2>
+          <p>{visibleProducts.length} бүтээгдэхүүн</p>
         </div>
+        {!selectedCategory && (
+          <Link href="/categories" className="text-link">Ангиллаар сонгох <span aria-hidden="true">→</span></Link>
+        )}
       </div>
 
-      {products.length === 0 ? (
-        <div className="catalog-message">
-          <h2>Одоогоор бүтээгдэхүүн алга</h2>
-          <p>Бүтээгдэхүүн нэмэгдсэн үед энд харагдана.</p>
-        </div>
-      ) : (
-        <ul className="catalog-grid">
-          {products.map((product) => (
-            <li className="catalog-card" key={product.id}>
-              <Link
-                href={`/products/${product.id}`}
-                className="catalog-card-visual"
-                aria-label={`${product.name} дэлгэрэнгүй харах`}
-              >
-                <span className="catalog-card-index">
-                  #{String(product.id).padStart(3, "0")}
-                </span>
-                <span className="catalog-card-monogram" aria-hidden="true">
-                  {product.name.trim().charAt(0).toUpperCase()}
-                </span>
-                <span className="catalog-card-open" aria-hidden="true">
-                  ↗
-                </span>
-              </Link>
-
-              <div className="catalog-card-content">
-                <span className="catalog-card-label">БҮТЭЭГДЭХҮҮН</span>
-
-                <h3>
-                  <Link href={`/products/${product.id}`}>
-                    {product.name}
-                  </Link>
-                </h3>
-
-                {product.description && (
-                  <p className="catalog-card-description">
-                    {product.description}
-                  </p>
+      {visibleProducts.length ? (
+        <ul className="product-grid">
+          {visibleProducts.map((product) => (
+            <li className="product-card" key={product.id}>
+              <Link href={getProductHref(product.id, product.name)} className="product-image">
+                {product.imageUrl ? (
+                  <span
+                    className="product-image-background"
+                    style={{ backgroundImage: `url("${product.imageUrl}")` }}
+                    role="img"
+                    aria-label={product.name}
+                  />
+                ) : (
+                  <Package size={48} strokeWidth={1.7} aria-hidden="true" />
                 )}
-
-                <div className="catalog-card-footer">
-                  <div>
-                    <span className="catalog-price-label">Үнэ</span>
-                    <p className="catalog-price">
-                      {Number(product.price).toLocaleString("mn-MN")} ₮
-                    </p>
-                  </div>
+              </Link>
+              <div className="product-card-content">
+                <h3><Link href={getProductHref(product.id, product.name)}>{product.name}</Link></h3>
+                {product.description && <p className="product-description">{product.description}</p>}
+                <div className="product-price-row">
+                  <strong className="product-price">{formatPrice(product.price)}</strong>
+                  {product.categoryName && <span className="product-category-tag">{product.categoryName}</span>}
                 </div>
-
-                <div className="catalog-cart-action">
+                <div className="product-actions">
+                  <Link
+                    className="product-details-button"
+                    href={getProductHref(product.id, product.name)}
+                  >
+                    Дэлгэрэнгүй
+                  </Link>
                   <CartButton
                     name={product.name}
-                    price={Number(product.price)}
-                    slug={String(product.id)}
+                    price={product.price ?? 0}
+                    slug={product.id}
                   />
                 </div>
               </div>
             </li>
           ))}
         </ul>
+      ) : (
+        <div className="empty-products">
+          <Package size={38} strokeWidth={1.6} aria-hidden="true" />
+          <h2>{products.length ? "Энэ ангилалд бүтээгдэхүүн алга" : "Бүтээгдэхүүн одоогоор алга"}</h2>
+          <p>
+            {products.length
+              ? "Өөр ангилал сонгох эсвэл бүх бүтээгдэхүүнийг үзнэ үү."
+              : "Бүтээгдэхүүн нэмэгдсэн үед энд харагдана."}
+          </p>
+          {!products.length && <p className="catalog-hint">API: {getApiEndpoint("products")}</p>}
+          <Link href="/categories" className="primary-button">Ангилал сонгох</Link>
+        </div>
       )}
     </section>
   );
