@@ -13,7 +13,7 @@ export default async function CategoriesPage() {
         <p>Бүтээгдэхүүний ангиллаа сонгоод бараануудтай танилцаарай.</p>
       </div>
 
-      <ul className="category-list">
+      <ul className="category-list category-list-vertical">
         {categories.map((category) => (
           <li key={category.id}>
             <Link

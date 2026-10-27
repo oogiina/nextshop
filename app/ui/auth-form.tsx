@@ -3,23 +3,85 @@
 import Link from "next/link";
 import { Eye, EyeOff, LockKeyhole, Mail, UserRoundPlus, UserRound } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AuthForm({ mode }: { mode: "login" | "register" }) {
   const isRegister = mode === "register";
+  const router = useRouter();
+const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("");
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (isRegister) {
-      const formData = new FormData(event.currentTarget);
-      if (formData.get("password") !== formData.get("confirmPassword")) {
-        setStatus("Нууц үг таарахгүй байна. Дахин шалгана уу.");
-        return;
-      }
-    }
-    setStatus("Нэвтрэх, бүртгэлийн үйлчилгээ одоогоор холбогдоогүй байна.");
+  
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+
+  if (isRegister && formData.get("password") !== formData.get("confirmPassword")) {
+    setStatus("Нууц үг таарахгүй байна. Дахин шалгана уу.");
+    return;
   }
+
+  const payload = {
+    email: String(formData.get("email") ?? ""),
+    password: String(formData.get("password") ?? ""),
+    ...(isRegister && {
+      fullName: String(formData.get("fullName") ?? ""),
+    }),
+  };
+
+  setIsSubmitting(true);
+  setStatus("");
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!baseUrl) {
+      throw new Error("API хаяг тохируулагдаагүй байна.");
+    }
+
+    const response = await fetch(
+      `${baseUrl}/api/auth/${isRegister ? "register" : "login"}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const data = await response.json();
+    console.log("LOGIN RESPONSE:", data);
+    if (!response.ok || !data.success) {
+     
+      throw new Error(data.message || "Үйлдэл амжилтгүй боллоо.");
+    }
+
+    setStatus(data.message || "Амжилттай!");
+
+if (isRegister) {
+  router.push("/login");
+} else {
+ localStorage.setItem("user", JSON.stringify(data.user));
+ if (data.token) localStorage.setItem("token", data.token);
+window.dispatchEvent(new Event("userChanged"));
+const requestedPath = new URLSearchParams(window.location.search).get("next");
+const nextPath = requestedPath || (data.user?.role === "ADMIN" ? "/admin" : "/");
+ router.push(nextPath);
+}
+  } catch (error) {
+    setStatus(
+      error instanceof Error
+        ? error.message
+        : "Сервертэй холбогдоход алдаа гарлаа."
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return (
     <main className="auth-page">
@@ -105,9 +167,17 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
             </div>
           )}
 
-          <button className="auth-submit" type="submit">
-            {isRegister ? "Бүртгүүлэх" : "Нэвтрэх"}
-          </button>
+<button
+  className="auth-submit"
+  type="submit"
+  disabled={isSubmitting}
+>
+  {isSubmitting
+    ? "Түр хүлээнэ үү..."
+    : isRegister
+      ? "Бүртгүүлэх"
+      : "Нэвтрэх"}
+</button>
           {status && <p className="auth-status" role="status">{status}</p>}
         </form>
 

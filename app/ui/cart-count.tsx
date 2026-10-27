@@ -5,5 +5,7 @@ import { useCart } from "../context/cart-context";
 export default function CartCount() {
   const { cartItems } = useCart();
 
-  return <span>🛒 Сагс ({cartItems.length})</span>;
+  const count = cartItems.reduce((total, item) => total + (item.quantity ?? 1), 0);
+
+  return <span>{count}</span>;
 }
